@@ -2,7 +2,7 @@ import { instrumentFatalError, instrumentSignal } from '../../cross-cutting/obse
 
 const handleFatalError =
 	(abortController: AbortController) =>
-	async (error: unknown): never => {
+	async (error: unknown): Promise<never> => {
 		abortController.abort();
 		await instrumentFatalError(error);
 		process.exit(1);
@@ -20,13 +20,13 @@ const SIGNAL_EXIT_CODES = {
 
 const handleSignal =
 	(abortController: AbortController) =>
-	async (signal: Signal): never => {
+	async (signal: Signal): Promise<never> => {
 		abortController.abort();
 		await instrumentSignal(signal);
 		process.exit(SIGNAL_EXIT_CODES[signal]);
 	};
 
-const registerShutdownHandlers = (abortController: AbortController): never => {
+const registerShutdownHandlers = (abortController: AbortController): void => {
 	const handler = handleFatalError(abortController);
 	process.on('uncaughtException', handler);
 	process.on('unhandledRejection', handler);

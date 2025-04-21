@@ -1,14 +1,17 @@
 import { createRequire } from 'node:module';
 import { trace, SpanStatusCode, type AttributeValue, type Span } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 
 import { Secret } from '../lib/secret.js';
-import { EnvironmentConfigurationProvider } from '../ports/driven/configuration/EnvironmentConfigurationProvider.js';
+import { EnvironmentConfigurationProvider } from '../ports/driven/EnvironmentConfigurationProvider.js';
+
+type Fn<P extends Array<unknown>, R> = (...args: P) => R;
+type FnAny = Fn<Array<unknown>, unknown>;
 
 const { name, version } = createRequire(import.meta.url)('../../package.json');
 
@@ -19,7 +22,7 @@ const {
 } = new EnvironmentConfigurationProvider().getConfiguration();
 
 const sdk = new NodeSDK({
-	resource: new Resource({
+	resource: resourceFromAttributes({
 		[ATTR_SERVICE_NAME]: name,
 		[ATTR_SERVICE_VERSION]: version,
 	}),
@@ -41,7 +44,7 @@ const sdk = new NodeSDK({
 
 sdk.start();
 
-const isDirectlySerializable = (value: object) =>
+const isDirectlySerializable = (value: object): boolean =>
 	Array.isArray(value) &&
 	(value.every((v) => typeof v === 'string') ||
 		value.every((v) => typeof v === 'number') ||
@@ -53,7 +56,7 @@ const MAX_OBJECT_SERIALIZATION_DEPTH = 5;
 const MAX_STRING_LENGTH = 100;
 const MAX_ERROR_MESSAGE_LENGTH = 2000;
 
-const normalizeString = (input: string) => {
+const normalizeString = (input: string): string => {
 	if (input.length <= MAX_STRING_LENGTH) {
 		return input;
 	}
@@ -78,7 +81,7 @@ const serializeToAttribute = (
 			return [[prefix, arg.name]];
 		case 'undefined':
 			return [[prefix, 'undefined']];
-		case 'object':
+		case 'object': {
 			if (arg === null) {
 				return [[prefix, 'null']];
 			}
@@ -108,10 +111,11 @@ const serializeToAttribute = (
 			return Object.entries(arg).flatMap(([key, value]) => {
 				return serializeToAttribute(`${prefix}.${key}`, value);
 			});
+		}
 	}
 };
 
-const serializeToAttributes = (...args: Array<unknown>) => {
+const serializeToAttributes = (...args: Array<unknown>): Record<string, AttributeValue> => {
 	return Object.fromEntries(
 		args.flatMap((arg, index) => {
 			const prefix = `${ATTRIBUTE_PREFIX}.arguments.${index}`;
@@ -120,9 +124,7 @@ const serializeToAttributes = (...args: Array<unknown>) => {
 	);
 };
 
-type Fn<P extends Array<any>, R> = (...args: P) => R;
-
-const handleErrorInSpan = (span: Span, error: unknown) => {
+const handleErrorInSpan = (span: Span, error: unknown): void => {
 	if (error instanceof Error) {
 		if (error.message.length > MAX_ERROR_MESSAGE_LENGTH) {
 			const streamlinedMessage = error.message.slice(0, MAX_ERROR_MESSAGE_LENGTH);
@@ -150,7 +152,7 @@ const handleErrorInSpan = (span: Span, error: unknown) => {
 	span.end();
 };
 
-const instrumentFunction = function <P extends Array<any>, R>(
+const instrumentFunction = function <P extends Array<unknown>, R>(
 	spanName: string,
 	fn: Fn<P, R>,
 ): Fn<P, R> {
@@ -187,10 +189,10 @@ const instrumentFunction = function <P extends Array<any>, R>(
 	};
 };
 
-const skippedMethods = new Set<Function>();
+const skippedMethods = new Set<FnAny>();
 
 function instrument() {
-	return function <T extends Function>(klass: T): T {
+	return function <T extends FnAny>(klass: T): T {
 		const { prototype, name } = klass;
 		Object.getOwnPropertyNames(prototype).forEach((key) => {
 			const value = prototype[key];
@@ -202,7 +204,7 @@ function instrument() {
 				return;
 			}
 
-			const newValue = function (this: any, ...args: Array<any>) {
+			const newValue = function (this: unknown, ...args: Array<unknown>) {
 				const inner = instrumentFunction(`${name} - ${key}`, value.bind(this));
 				return inner(...args);
 			};
@@ -214,13 +216,13 @@ function instrument() {
 }
 
 function skipInstrumentation() {
-	return function <T extends Function>(method: T): T {
+	return function <T extends FnAny>(method: T): T {
 		skippedMethods.add(method);
 		return method;
 	};
 }
 
-const instrumentFatalError = async (error: unknown) => {
+const instrumentFatalError = async (error: unknown): Promise<void> => {
 	instrumentFunction('shutdown - unhandledRejection', () => {
 		const span = trace.getActiveSpan()!;
 		if (error instanceof Error) {
@@ -240,7 +242,7 @@ const instrumentFatalError = async (error: unknown) => {
 	await sdk.shutdown();
 };
 
-const instrumentSignal = async (signal: string) => {
+const instrumentSignal = async (signal: string): Promise<void> => {
 	instrumentFunction('shutdown - signal', () => {
 		trace.getActiveSpan()!.setAttribute(`${ATTRIBUTE_PREFIX}.shutdown.signal`, signal);
 	})();
