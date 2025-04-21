@@ -1,10 +1,8 @@
-import {
-	instrumentFatalError,
-	instrumentSignal,
-} from '../../cross-cutting/observability.js';
+import { instrumentFatalError, instrumentSignal } from '../../cross-cutting/observability.js';
 
 const handleFatalError =
-	(abortController: AbortController) => async (error: unknown) => {
+	(abortController: AbortController) =>
+	async (error: unknown): never => {
 		abortController.abort();
 		await instrumentFatalError(error);
 		process.exit(1);
@@ -21,13 +19,14 @@ const SIGNAL_EXIT_CODES = {
 } as const satisfies Record<Signal, number>;
 
 const handleSignal =
-	(abortController: AbortController) => async (signal: Signal) => {
+	(abortController: AbortController) =>
+	async (signal: Signal): never => {
 		abortController.abort();
 		await instrumentSignal(signal);
 		process.exit(SIGNAL_EXIT_CODES[signal]);
 	};
 
-const registerShutdownHandlers = (abortController: AbortController) => {
+const registerShutdownHandlers = (abortController: AbortController): never => {
 	const handler = handleFatalError(abortController);
 	process.on('uncaughtException', handler);
 	process.on('unhandledRejection', handler);
