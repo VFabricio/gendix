@@ -5,7 +5,7 @@ export const configurationSchema = z.object({
 	observability: z.object({
 		otlpEndpoint: z.string(),
 		otlpHeaderKey: z.string(),
-		otlpHeaderValue: z.instanceof(Secret),
+		otlpHeaderValue: z.instanceof(Secret).describe('Secret'),
 	}),
 });
 

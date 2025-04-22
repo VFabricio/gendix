@@ -57,7 +57,9 @@ export class EnvironmentConfigurationProvider implements ConfigurationProvider {
 			} else if (zodType.description === 'Secret') {
 				config[key] = new Secret(envValue);
 			} else {
-				throw new Error('Values in the configuration schema must be either strings, numbers, or secrets');
+				throw new Error(
+					'Values in the configuration schema must be either strings, numbers, or secrets',
+				);
 			}
 		});
 
