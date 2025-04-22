@@ -10,14 +10,14 @@ export class Secret {
 	}
 
 	toString(): string {
-		return "[SECRET]";
+		return '[SECRET]';
 	}
 
 	toJSON(): string {
-		return "[SECRET]";
+		return '[SECRET]';
 	}
 
 	[Symbol.toPrimitive](): string {
-		return "[SECRET]";
+		return '[SECRET]';
 	}
 }
