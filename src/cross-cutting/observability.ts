@@ -204,7 +204,7 @@ function instrument() {
 				return;
 			}
 
-			const newValue = function (this: unknown, ...args: Array<unknown>) {
+			const newValue = function (this: unknown, ...args: Array<unknown>): unknown {
 				const inner = instrumentFunction(`${name} - ${key}`, value.bind(this));
 				return inner(...args);
 			};

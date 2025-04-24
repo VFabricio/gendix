@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+		<title>Cadastro</title>
+		<script src="/assets/zxcvbn.js"></script>
+		<style>
+			body {
+				font-family:
+					system-ui,
+					-apple-system,
+					sans-serif;
+				line-height: 1.6;
+				max-width: 600px;
+				margin: 0 auto;
+				padding: 1rem;
+				box-sizing: border-box;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			h1 {
+				margin-top: 2rem;
+				font-size: clamp(1.5rem, 5vw, 2rem);
+			}
+			form {
+				margin-top: 2rem;
+				width: 100%;
+			}
+			.form-group {
+				margin-bottom: 1rem;
+				width: 100%;
+			}
+			label {
+				display: block;
+				margin-bottom: 0.5rem;
+				font-weight: bold;
+			}
+			input {
+				width: 100%;
+				max-width: 100%;
+				padding: 0.5rem;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				font-size: 16px;
+			}
+			button {
+				background-color: #0070f3;
+				color: white;
+				border: none;
+				padding: 0.5rem 1rem;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 1rem;
+				max-width: 100%;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			button:hover {
+				background-color: #0051cb;
+			}
+
+			button:disabled {
+				background-color: #cccccc;
+				color: #666666;
+				cursor: not-allowed;
+			}
+
+			/* Toggle switch styles */
+			.toggle-container {
+				display: flex;
+				justify-content: center;
+				margin: 2rem 0;
+				border-radius: 8px;
+				overflow: hidden;
+				width: 100%;
+				max-width: 100%;
+			}
+			.toggle-button {
+				flex: 1;
+				text-align: center;
+				padding: 0.8rem;
+				cursor: pointer;
+				background-color: #f0f0f0;
+				color: #333;
+				border: 1px solid #ddd;
+				transition: all 0.3s;
+				white-space: nowrap;
+				font-size: clamp(0.8rem, 4vw, 1rem);
+			}
+			.toggle-button:first-child {
+				border-radius: 4px 0 0 4px;
+			}
+			.toggle-button:last-child {
+				border-radius: 0 4px 4px 0;
+			}
+			.toggle-button.active {
+				background-color: #0070f3;
+				color: white;
+				border-color: #0070f3;
+			}
+
+			#pj-fields {
+				display: none;
+			}
+
+			.error-message {
+				color: #e53e3e;
+				font-size: 0.85rem;
+				margin-top: 0.3rem;
+			}
+
+			.password-strength-meter {
+				height: 5px;
+				width: 100%;
+				max-width: 100%;
+				background-color: #ddd;
+				border-radius: 3px;
+				margin-top: 5px;
+				overflow: hidden;
+			}
+
+			.password-strength-meter-fill {
+				height: 100%;
+				border-radius: 3px;
+				transition:
+					width 0.3s ease,
+					background-color 0.3s ease;
+				max-width: 100%;
+			}
+
+			.strength-0 {
+				width: 0%;
+				background-color: #ddd;
+			}
+			.strength-1 {
+				width: 25%;
+				background-color: #f44336;
+			}
+			.strength-2 {
+				width: 50%;
+				background-color: #ff9800;
+			}
+			.strength-3 {
+				width: 75%;
+				background-color: #ffeb3b;
+			}
+			.strength-4 {
+				width: 100%;
+				background-color: #4caf50;
+			}
+
+			.password-strength-text {
+				font-size: 0.8rem;
+				margin-top: 5px;
+			}
+
+			.spinner {
+				display: inline-block;
+				width: 1rem;
+				height: 1rem;
+				margin-right: 0.5rem;
+				border: 2px solid rgba(255, 255, 255, 0.3);
+				border-radius: 50%;
+				border-top-color: #fff;
+				animation: spin 1s ease-in-out infinite;
+				vertical-align: middle;
+			}
+
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			.submit-error {
+				color: #e53e3e;
+				margin-top: 1rem;
+				text-align: center;
+				display: none;
+			}
+
+			.password-container {
+				position: relative;
+			}
+
+			.password-toggle {
+				position: absolute;
+				right: 10px;
+				top: 50%;
+				transform: translateY(-50%);
+				cursor: pointer;
+				user-select: none;
+				color: #666;
+				font-size: 1.2rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 30px;
+				height: 30px;
+				background: transparent;
+				border: none;
+				padding: 0;
+			}
+
+			.password-toggle:hover {
+				color: #333;
+			}
+
+			.password-toggle svg {
+				width: 20px;
+				height: 20px;
+				fill: currentColor;
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Cadastre-se</h1>
+		<p>Crie sua conta para começar a usar nossa automação de respostas do WhatsApp com IA.</p>
+
+		<div class="toggle-container">
+			<button id="toggle-pf" type="button" class="toggle-button active">Pessoa Física</button>
+			<button id="toggle-pj" type="button" class="toggle-button">Pessoa Jurídica</button>
+		</div>
+
+		<form id="signup-form">
+			<section id="pf-fields">
+				<div class="form-group">
+					<label for="nome">Nome</label>
+					<input type="text" id="nome" name="firstName" required />
+					<span id="firstName-error" class="error-message" style="display: none">
+						Nome inválido
+					</span>
+				</div>
+
+				<div class="form-group">
+					<label for="sobrenome">Sobrenome</label>
+					<input type="text" id="sobrenome" name="lastName" required />
+					<span id="lastName-error" class="error-message" style="display: none">
+						Sobrenome inválido
+					</span>
+				</div>
+
+				<div class="form-group">
+					<label for="cpf">CPF</label>
+					<input
+						type="text"
+						id="cpf"
+						name="cpf"
+						placeholder="000.000.000-00"
+						maxlength="14"
+						required
+					/>
+				</div>
+			</section>
+
+			<!-- Pessoa Jurídica fields -->
+			<section id="pj-fields">
+				<div class="form-group">
+					<label for="razao-social">Razão Social</label>
+					<input type="text" id="razao-social" name="companyName" required />
+					<span id="companyName-error" class="error-message" style="display: none">
+						Razão social inválida
+					</span>
+				</div>
+
+				<div class="form-group">
+					<label for="cnpj">CNPJ</label>
+					<input
+						type="text"
+						id="cnpj"
+						name="cnpj"
+						placeholder="00.000.000/0000-00"
+						maxlength="18"
+						required
+					/>
+				</div>
+			</section>
+
+			<div class="form-group">
+				<label for="email">Email</label>
+				<input type="email" id="email" name="email" required />
+			</div>
+
+			<div class="form-group">
+				<label for="password">Senha</label>
+				<div class="password-container">
+					<input type="password" id="password" name="password" required />
+					<button
+						type="button"
+						class="password-toggle"
+						id="password-toggle"
+						aria-label="Mostrar senha"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+							<path
+								d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+							/>
+						</svg>
+					</button>
+				</div>
+				<div class="password-strength-meter">
+					<div id="password-strength-fill" class="password-strength-meter-fill strength-0"></div>
+				</div>
+				<div id="password-strength-text" class="password-strength-text"></div>
+				<span id="password-strength-error" class="error-message" style="display: none">
+					Sua senha precisa ser pelo menos "Boa"
+				</span>
+			</div>
+
+			<div class="form-group">
+				<label for="confirm-password">Confirmar Senha</label>
+				<div class="password-container">
+					<input type="password" id="confirm-password" name="confirmPassword" required />
+					<button
+						type="button"
+						class="password-toggle"
+						id="confirm-password-toggle"
+						aria-label="Mostrar senha"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+							<path
+								d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+							/>
+						</svg>
+					</button>
+				</div>
+				<span id="password-mismatch" class="error-message" style="display: none">
+					As senhas não coincidem
+				</span>
+			</div>
+
+			<button type="submit" id="submit-btn" disabled>
+				<span id="spinner" class="spinner" style="display: none"></span>Criar Conta
+			</button>
+			<div id="submit-error" class="submit-error">
+				Erro ao realizar cadastro. Por favor, tente novamente mais tarde.
+			</div>
+		</form>
+
+		<script>
+			const togglePF = document.getElementById('toggle-pf');
+			const togglePJ = document.getElementById('toggle-pj');
+			const pfFields = document.getElementById('pf-fields');
+			const pjFields = document.getElementById('pj-fields');
+			const form = document.getElementById('signup-form');
+			const submitBtn = document.getElementById('submit-btn');
+			const cpfInput = document.getElementById('cpf');
+			const cnpjInput = document.getElementById('cnpj');
+			const passwordMismatch = document.getElementById('password-mismatch');
+			const firstNameError = document.getElementById('firstName-error');
+			const lastNameError = document.getElementById('lastName-error');
+			const companyNameError = document.getElementById('companyName-error');
+			const passwordStrengthFill = document.getElementById('password-strength-fill');
+			const passwordStrengthText = document.getElementById('password-strength-text');
+			const passwordStrengthError = document.getElementById('password-strength-error');
+			const spinner = document.getElementById('spinner');
+			const submitError = document.getElementById('submit-error');
+			const passwordToggle = document.getElementById('password-toggle');
+			const confirmPasswordToggle = document.getElementById('confirm-password-toggle');
+
+			const touchedFields = new Set();
+
+			let currentType = 'pf';
+			let passwordScore = 0;
+
+			function togglePasswordVisibility(inputElement, toggleButton) {
+				if (inputElement.type === 'password') {
+					inputElement.type = 'text';
+					toggleButton.innerHTML = `
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+							<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+						</svg>
+					`;
+				} else {
+					inputElement.type = 'password';
+					toggleButton.innerHTML = `
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+							<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+						</svg>
+					`;
+				}
+			}
+
+			passwordToggle.addEventListener('click', function () {
+				const passwordInput = document.getElementById('password');
+				togglePasswordVisibility(passwordInput, passwordToggle);
+			});
+
+			confirmPasswordToggle.addEventListener('click', function () {
+				const confirmPasswordInput = document.getElementById('confirm-password');
+				togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
+			});
+
+			togglePF.addEventListener('click', () => {
+				if (currentType !== 'pf') {
+					togglePF.classList.add('active');
+					togglePJ.classList.remove('active');
+					pfFields.style.display = 'block';
+					pjFields.style.display = 'none';
+					currentType = 'pf';
+
+					setFieldsRequired('pf');
+					validateForm();
+				}
+			});
+
+			togglePJ.addEventListener('click', () => {
+				if (currentType !== 'pj') {
+					togglePJ.classList.add('active');
+					togglePF.classList.remove('active');
+					pjFields.style.display = 'block';
+					pfFields.style.display = 'none';
+					currentType = 'pj';
+
+					setFieldsRequired('pj');
+					validateForm();
+				}
+			});
+
+			function setFieldsRequired(type) {
+				document.querySelectorAll('#pf-fields input, #pj-fields input').forEach((input) => {
+					input.required = false;
+				});
+
+				if (type === 'pf') {
+					document.querySelectorAll('#pf-fields input').forEach((input) => {
+						input.required = true;
+					});
+				} else {
+					document.querySelectorAll('#pj-fields input').forEach((input) => {
+						input.required = true;
+					});
+				}
+			}
+
+			cpfInput.addEventListener('input', function (e) {
+				let value = e.target.value.replace(/\D/g, '');
+				if (value.length > 11) value = value.slice(0, 11);
+
+				if (value.length >= 10) {
+					value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2}).*/, '$1.$2.$3-$4');
+				} else if (value.length > 6) {
+					value = value.replace(/^(\d{3})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+				} else if (value.length > 3) {
+					value = value.replace(/^(\d{3})(\d{0,3}).*/, '$1.$2');
+				}
+
+				e.target.value = value;
+				validateForm();
+			});
+
+			cnpjInput.addEventListener('input', function (e) {
+				let value = e.target.value.replace(/\D/g, '');
+				if (value.length > 14) value = value.slice(0, 14);
+
+				if (value.length > 12) {
+					value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
+				} else if (value.length > 8) {
+					value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/, '$1.$2.$3/$4');
+				} else if (value.length > 5) {
+					value = value.replace(/^(\d{2})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+				} else if (value.length > 2) {
+					value = value.replace(/^(\d{2})(\d{0,3}).*/, '$1.$2');
+				}
+
+				e.target.value = value;
+				validateForm();
+			});
+
+			function validateForm() {
+				let isValid = true;
+				const requiredFields = document.querySelectorAll('input[required]');
+
+				requiredFields.forEach((field) => {
+					const fieldIsInvalid =
+						!field.value ||
+						(field.type !== 'password' && field.value.trim() === '') ||
+						((field.name === 'firstName' ||
+							field.name === 'lastName' ||
+							field.name === 'companyName') &&
+							/^[.\s]+$/.test(field.value));
+
+					if (fieldIsInvalid) {
+						isValid = false;
+
+						if (touchedFields.has(field.name)) {
+							if (field.name === 'firstName') {
+								firstNameError.style.display = 'block';
+							} else if (field.name === 'lastName') {
+								lastNameError.style.display = 'block';
+							} else if (field.name === 'companyName') {
+								companyNameError.style.display = 'block';
+							}
+						}
+					} else {
+						if (field.name === 'firstName') {
+							firstNameError.style.display = 'none';
+						} else if (field.name === 'lastName') {
+							lastNameError.style.display = 'none';
+						} else if (field.name === 'companyName') {
+							companyNameError.style.display = 'none';
+						}
+					}
+				});
+
+				if (passwordScore < 3) {
+					isValid = false;
+				}
+
+				const password = document.getElementById('password');
+				const confirmPassword = document.getElementById('confirm-password');
+
+				if (password.value !== confirmPassword.value) {
+					isValid = false;
+
+					if (password.value && confirmPassword.value) {
+						passwordMismatch.style.display = 'block';
+					} else {
+						passwordMismatch.style.display = 'none';
+					}
+				} else {
+					passwordMismatch.style.display = 'none';
+				}
+
+				if (currentType === 'pf') {
+					const cpf = cpfInput.value.replace(/\D/g, '');
+					if (cpf.length !== 11) {
+						isValid = false;
+					}
+				} else {
+					const cnpj = cnpjInput.value.replace(/\D/g, '');
+					if (cnpj.length !== 14) {
+						isValid = false;
+					}
+				}
+
+				submitBtn.disabled = !isValid;
+			}
+
+			const inputs = document.querySelectorAll('input');
+			inputs.forEach((input) => {
+				input.addEventListener('input', validateForm);
+				input.addEventListener('blur', () => {
+					touchedFields.add(input.name);
+					validateForm();
+				});
+
+				if (input.id === 'password') {
+					input.addEventListener('input', updatePasswordStrength);
+				}
+			});
+
+			function updatePasswordStrength() {
+				const password = document.getElementById('password').value;
+				if (!password) {
+					passwordStrengthFill.className = 'password-strength-meter-fill strength-0';
+					passwordStrengthText.textContent = '';
+					passwordScore = 0;
+					validatePasswordStrength();
+					return;
+				}
+
+				const result = zxcvbn(password);
+				passwordScore = result.score;
+
+				passwordStrengthFill.className = `password-strength-meter-fill strength-${passwordScore}`;
+
+				const strengthLabels = ['Muito fraca', 'Fraca', 'Razoável', 'Boa', 'Forte'];
+
+				passwordStrengthText.textContent = `Força da senha: ${strengthLabels[passwordScore]}`;
+				validatePasswordStrength();
+			}
+
+			function validatePasswordStrength() {
+				const isPasswordTouched = touchedFields.has('password');
+
+				if (passwordScore < 3 && (isPasswordTouched || form.dataset.submitted === 'true')) {
+					passwordStrengthError.style.display = 'block';
+				} else {
+					passwordStrengthError.style.display = 'none';
+				}
+
+				validateForm();
+			}
+
+			form.addEventListener('submit', function (event) {
+				event.preventDefault();
+				form.dataset.submitted = 'true';
+				validateForm();
+
+				if (!form.checkValidity() || submitBtn.disabled) {
+					return;
+				}
+
+				spinner.style.display = 'inline-block';
+				submitBtn.disabled = true;
+				submitError.style.display = 'none';
+
+				const formData = new FormData(form);
+				const formEntries = Array.from(formData.entries()).map(([key, value]) => {
+					if (typeof value === 'string' && key !== 'password' && key !== 'confirmPassword') {
+						return [key, value.trim()];
+					}
+					return [key, value];
+				});
+
+				const data = {
+					accountType: currentType === 'pf' ? 'individual' : 'business',
+					...Object.fromEntries(formEntries),
+				};
+
+				delete data.confirmPassword;
+
+				const userEmail = data.email;
+
+				fetch('/api/signup', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(data),
+				})
+					.then((response) => {
+						if (response.ok) {
+							return response.json();
+						}
+						throw new Error('Falha ao realizar cadastro');
+					})
+					.then((result) => {
+						window.location.href = `/signup-success?email=${encodeURIComponent(userEmail)}`;
+					})
+					.catch((error) => {
+						console.error('Error:', error);
+						spinner.style.display = 'none';
+						submitBtn.disabled = false;
+						submitError.style.display = 'block';
+					});
+			});
+
+			setFieldsRequired('pf');
+		</script>
+	</body>
+</html>

@@ -48,6 +48,7 @@ Rather, within each callback responding to events or HTTP requests we must manua
 - We use ESLint for linting, with the standard configurations.
 - We use Husky to manage git hooks.
 - There is a pre-push to hook to ensure that the code builds, is formatted correctly and approved by the linter before it can be pushed.
+- We use ES modules, without any transpilation. Therefore, imports should have the .js extension.
 
 ## Cloud Architecture
 
@@ -81,7 +82,8 @@ For the moment, we will SSH into EC2 and run Docker Swarm commands manually to p
 Our database is a Postgresql instance running in RDS.
 There is no need to avoid Postgresql specific functionality or restrict ourservel to ANSI SQL.
 We must, however, take care to only use Postgresql features supported by RDS.
-We use Kysely that intermediate all DB communication.
+We use Kysely to intermediate all DB communication.
+All primary keys must be UUIDs.
 
 ## HTTP
 
@@ -94,6 +96,7 @@ In the cross-cutting/observability.ts module we define several helpers to instru
 It is expected that, to a first approximation, every function call within our own code should be traced, along with the values of all parameters.
 It may not be possible to follow this ideal 100%, due to excessive chattiness and costs in our observability infrastructure.
 However, the approach must be to first instrument everything and only remove instrumentation when necessary.
+Functions must be instrumented at the point they are defined, not where they are invoked.
 
 ## AI specific instructions
 

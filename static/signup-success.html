@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+		<title>Cadastro Realizado - Gendix</title>
+		<style>
+			body {
+				font-family:
+					system-ui,
+					-apple-system,
+					sans-serif;
+				line-height: 1.6;
+				max-width: 600px;
+				margin: 0 auto;
+				padding: 1rem;
+				box-sizing: border-box;
+				text-align: center;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			h1 {
+				margin-top: 2rem;
+				font-size: clamp(1.5rem, 5vw, 2rem);
+				color: #0070f3;
+			}
+			.success-icon {
+				width: 80px;
+				height: 80px;
+				margin: 2rem auto;
+				background-color: #4caf50;
+				border-radius: 50%;
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.success-icon::after {
+				content: "";
+				width: 35px;
+				height: 20px;
+				border-left: 4px solid white;
+				border-bottom: 4px solid white;
+				transform: rotate(-45deg) translate(2px, -5px);
+			}
+			.message {
+				background-color: #f5f5f5;
+				padding: 1.5rem;
+				border-radius: 8px;
+				margin: 1.5rem 0;
+				font-size: 1.1rem;
+			}
+			.email {
+				font-weight: bold;
+				color: #0070f3;
+			}
+			.home-link {
+				display: inline-block;
+				margin-top: 2rem;
+				color: #0070f3;
+				text-decoration: none;
+				font-weight: bold;
+			}
+			.home-link:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="success-icon"></div>
+		<h1>Cadastro Realizado com Sucesso!</h1>
+		
+		<div class="message">
+			Um email de confirmação foi enviado para <span id="user-email" class="email"></span>.
+			<p>Por favor, verifique sua caixa de entrada e siga as instruções para finalizar a configuração da sua conta.</p>
+		</div>
+		
+		<a href="/" class="home-link">Voltar para a página inicial</a>
+		
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const params = new URLSearchParams(window.location.search);
+				const email = params.get('email');
+				
+				if (email) {
+					document.getElementById('user-email').textContent = email;
+				} else {
+					document.getElementById('user-email').textContent = 'seu endereço de email';
+				}
+			});
+		</script>
+	</body>
+</html>
