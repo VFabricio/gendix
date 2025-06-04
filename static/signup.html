@@ -14,14 +14,14 @@
 				line-height: 1.6;
 				max-width: 600px;
 				margin: 0 auto;
-				padding: 1rem;
+				padding: 2rem 1rem;
 				box-sizing: border-box;
 			}
 			* {
 				box-sizing: border-box;
 			}
 			h1 {
-				margin-top: 2rem;
+				margin-top: 1rem;
 				font-size: clamp(1.5rem, 5vw, 2rem);
 			}
 			form {
@@ -247,7 +247,7 @@
 				<div class="form-group">
 					<label for="cpf">CPF</label>
 					<input
-						type="text"
+						type="tel"
 						id="cpf"
 						name="cpf"
 						placeholder="000.000.000-00"
@@ -270,7 +270,7 @@
 				<div class="form-group">
 					<label for="cnpj">CNPJ</label>
 					<input
-						type="text"
+						type="tel"
 						id="cnpj"
 						name="cnpj"
 						placeholder="00.000.000/0000-00"
@@ -283,6 +283,7 @@
 			<div class="form-group">
 				<label for="email">Email</label>
 				<input type="email" id="email" name="email" required />
+				<span id="email-error" class="error-message" style="display: none"> Email inválido </span>
 			</div>
 
 			<div class="form-group">
@@ -354,6 +355,7 @@
 			const firstNameError = document.getElementById('firstName-error');
 			const lastNameError = document.getElementById('lastName-error');
 			const companyNameError = document.getElementById('companyName-error');
+			const emailError = document.getElementById('email-error');
 			const passwordStrengthFill = document.getElementById('password-strength-fill');
 			const passwordStrengthText = document.getElementById('password-strength-text');
 			const passwordStrengthError = document.getElementById('password-strength-error');
@@ -437,6 +439,20 @@
 				}
 			}
 
+			function isValidEmail(email) {
+				if (!email || email.length < 5) return false;
+				if (!email.includes('@') || !email.includes('.')) return false;
+				if (email.startsWith('.') || email.endsWith('.')) return false;
+				if (email.includes('..')) return false;
+
+				const parts = email.split('.');
+				const tld = parts[parts.length - 1];
+				if (tld.length < 2) return false;
+
+				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+				return emailRegex.test(email);
+			}
+
 			cpfInput.addEventListener('input', function (e) {
 				let value = e.target.value.replace(/\D/g, '');
 				if (value.length > 11) value = value.slice(0, 11);
@@ -458,7 +474,7 @@
 				if (value.length > 14) value = value.slice(0, 14);
 
 				if (value.length > 12) {
-					value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
+					value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2}).*/, '$1.$2.$3/$4-$5');
 				} else if (value.length > 8) {
 					value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/, '$1.$2.$3/$4');
 				} else if (value.length > 5) {
@@ -506,6 +522,16 @@
 						}
 					}
 				});
+
+				const emailField = document.getElementById('email');
+				if (emailField.value && !isValidEmail(emailField.value.trim())) {
+					isValid = false;
+					if (touchedFields.has('email')) {
+						emailError.style.display = 'block';
+					}
+				} else {
+					emailError.style.display = 'none';
+				}
 
 				if (passwordScore < 3) {
 					isValid = false;
