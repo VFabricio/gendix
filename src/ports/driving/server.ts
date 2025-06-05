@@ -59,6 +59,7 @@ function startServer(_abortSignal: AbortSignal): void {
 
 	app.get('/signup', serveStatic({ path: './static/signup.html' }));
 	app.get('/signup-success', serveStatic({ path: './static/signup-success.html' }));
+	app.get('/styles.css', serveStatic({ path: './static/styles.css' }));
 	app.get('/assets/zxcvbn.js', serveStatic({ path: './static/assets/zxcvbn.js' }));
 
 	app.post('/api/signup', jsonValidator(signupSchema), async (c) => {
